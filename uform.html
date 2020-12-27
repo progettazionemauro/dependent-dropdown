@@ -11,10 +11,6 @@
     <title>Hello, world!</title>
   </head>
   <body>
-  
-  
-
-
 
 
   <div class="container">
@@ -27,10 +23,23 @@
   </div>
   
   
- 
+  <!-- ATTENZIONE QUESTO E' IL GRUPPO CHE CREA IL DROPDOWN -->
+   <!-- DWN: ORGANIZZAZIONE DA INSERIRE IN A) FUNZIONE DI INSERIMENTO PER CREARE LA DIPENDENZA-->
+   <!-- ATTENZIONE QUESTO E' IL GRUPPO CHE CREA IL DROPDOWN -->
 <div class="form-group">
-    <label for="exampleFormControlSelect1">Organizzazione</label>
+    <label for="organizzazione">Organizzazione</label>
     <select class="form-group" id="organizzazione" >
+    
+    </select>
+  </div>
+  
+    
+  <!-- ATTENZIONE QUESTO E' IL GRUPPO CHE CREA IL DROPDOWN -->
+     <!-- DWN: ORGANIZZAZIONE DA INSERIRE IN A) FUNZIONE DI INSERIMENTO PER CREARE LA DIPENDENZA-->
+   <!-- DWN: REGIONE -->
+<div class="form-group">
+    <label for="regione">Regione</label>
+    <select class="form-group" id="regione" >
     
     </select>
   </div>
@@ -57,14 +66,26 @@
     -->
       <script>
       
-      // FUNZIONE DI INSERIMENTO
+      // IL VALORE DELL'ARRAY E' SETTATO GLOBALMENTE AL FINE DI PERMETTERNE L'ACCESSO ALLE DIVERSE FUNZIONI DROPDOWN
+      
+      var arrayOfValues;
+      
+      //FUNZIONE DI LETTURA
+      
+      // A) FUNZIONE DI INSERIMENTO 
+      //PRIMA VA INSERITO IL DATO PRESO DAL DOM COME VARIABILE
       function afterButtonClicked () {
       var prog=document.getElementById("progressivo");
       var orga=document.getElementById("organizzazione");
-      var rowData= {id: prog.value, org:orga.value};
+      var reg=document.getElementById("regione");
+      
+       //FUNZIONE DI TRASFERIMENTO AL BACKEND
+      //POI VA INSERITO IN ROWDATA PER PORTARLO ALLA FUNZIONE DI BACKEND FUNZIONE ADDNEWROW IN FUNC.GS
+      var rowData= {id: prog.value, org:orga.value, reg:reg.value};
       google.script.run.withSuccessHandler(afterSubmit).addNewRow(rowData)
       }
       
+       //FUNZIONE DI SCRITTURA
       //FUNZIONE CHE AZZERA LA CASELLA ORGAIZZAZIONE DOPO L'AVVENUTO INSERIMENTO
       function afterSubmit(e) {
       var orga=document.getElementById("organizzazione");
@@ -72,28 +93,88 @@
       
       }
       
+       //FUNZIONE DI LETTURA
       // COSTRUZIONE DROPDOWN 2) QUESTA FUNZIONE RECUPERA DAL BACKEND (FUNC.GS) L'ARRAY DI DATI DA INSERIRE
       function afterPageLoads(){
       
        google.script.run.withSuccessHandler(afterDropDownArrayReturned).getDropdownArray(); 
       }
+     
+     
+     //N° 5 FUNZIONE DI SCRITTURA CHE INSERISCE I VALORI DI DDWN
+     // TALE FUNZIONE RECUPERA I VALORI DALLA FUNZIONE N° 4
+     // IL PARAMETRO INDEX E' IL VALORE DELLA COLONNA DA LEGGERE NEL DDWN
+     
+     function addUniqueOptionsToDropdownList(el, arrayOfArrays, index) {
+     
+     
+      // questa variabile serve per inizializzare l'array
+      // tutto il ciclo viene effettuato su questo array che viene passato come parametro alla funzione sottostante
+      var currentlyAddedArray=[];
+   
+      el.innerHTML='';     // OPPURE el.innerHTML='<option></option>';
       
-    // COSTRUZIONE DROPDOWN 3) QUESTA FUNZIONE PRENDE I DATI RECUPERATI DAL BACKEND E LI INERISCE ALL'INTERNO DEL DOM
-      function afterDropDownArrayReturned (arrayOfArrays) {
-      var orgaOption=document.getElementById("organizzazione");
+      // INDEXOFARRAY SERVE A VERIFICARE I VALORI MULTIPLI SUI DATI RICERCATI
+      // NEL DDWN SE VI SONO VALORI MULTIPLI IL CICLO FOREACH LI ESCLUDE GRAZIE A INDEXOFARRAY ===-1
+      // INFATTI IL VALORE DI INDEXOFARRAY===-1 SIGNIFICA CHE QUEL VALORE DI ARRAY NON E' ANCORA NELLA LISTA
       
-          
-      arrayOfArrays.forEach(function(r) {
+     
+      arrayOfArrays.forEach(function(r) {if (currentlyAddedArray.indexOf(r[index])===-1) {
       var option=document.createElement("option");
-      option.textContent=r[0];
-      orgaOption.appendChild(option);
+      option.textContent=r[index];
+      el.appendChild(option);
+      
+      //questo metodo effettua il push per inserire nel DDWN il nuovo valore di ricerca
+     currentlyAddedArray.push(r[index]);
+     }
       });
      
+     
+     }
+   
+     
+    // N° 4 FUNZIONE DI LETTURA
+    // (PER LA N° 3 VEDERE FUNC.GS) 
+    //COSTRUZIONE DROPDOWN 4) QUESTA FUNZIONE PRENDE I DATI RECUPERATI DAL BACKEND E LI INERISCE ALL'INTERNO DEL DOM
+    // IL BACKEND DI CARICAMENTO E' PRESENTE IN FUNC.GS
+    // LA FUNZIONE addUniqueOptionsToDropdownList RECUPERA I DATI RELATIVI AI SEGUENTI VALORI:
+    // AA) DEL DOM "ORGANIZZAZIONE", 
+    // AAA) DELL'ARRAY 
+    // DELL'INDEX (III PARAMETRO) - TALE INDEX E' IL VALORE DELLA COLONNA (SI INIZIA PER ZERO CHE DEVE ESSERE LETTA NEL DDWN)
+    
+      function afterDropDownArrayReturned (arrayOfArrays) {
+      
+      // PRENDO LA VARIABILE GLOBALE DI ARRAY ED IMPONGO CHE SIA UGUALE A QUELLA INTERNA ALLA FUNZIONE
+      // QUESTO FILTRO NON FA ALTRO CHE CREARE UNA COPIA DELL'ARRAY GLOBALE
+      // UNA VOLTA CHE HO QUESTA COPIA POSSO PASSARE ARRAYOFARRAY NELLA FUNZIONE N°6 CHE CREA IL SECONDO DROPDOWN
+      arrayOfValues=arrayOfArrays.filter(function (r) {return true;});
+      var item=document.getElementById("organizzazione");
+      addUniqueOptionsToDropdownList(item,arrayOfValues,1);
+      afterFirstDropdownreturned();
+      
+      
+      }
+      
+       // N° 6 FUNZIONE DI LETTURA 
+       // DROPDWN DIPENDENTE DAL PRIMO DDWN DI VALORI
+       // NELLA FUNZIONE ADDUNIQUEDD... RICORDARSI DI INSERIRE IL N° DI COLONNA CORRISPONDENTE AL VALORE DA POPOLARE
+
+       
+      function afterFirstDropdownreturned() {
+                        var item=document.getElementById("regione");
+                        var orgaDwn=document.getElementById("organizzazione").value;
+                   
+                        var filterArrayValues=arrayOfValues.filter(function (r) {return r[1]===orgaDwn});
+                     
+                      
+                        addUniqueOptionsToDropdownList(item,filterArrayValues,6);
       
       }
       
       document.getElementById("mainbutton").addEventListener("click", afterButtonClicked);
+        document.getElementById("organizzazione").addEventListener("change", afterFirstDropdownreturned);
       
+      //FUNZIONE DI LETTURA
       // COSTRUZIONE DROPDOWN 1) QUESTA FUNZIONE ATTIVA ALA FUNZIONE AFTERPAGELOADS
       document.addEventListener("DOMContentLoaded", afterPageLoads);
       
